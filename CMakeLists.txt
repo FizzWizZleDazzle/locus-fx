@@ -1,5 +1,16 @@
 cmake_minimum_required(VERSION 3.20)
 
+# Allow older cmake_minimum_required in dependencies (Eigen, SymEngine)
+set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
+
+# Suppress removed FindCUDA and FindBoost module warnings from Eigen
+if(POLICY CMP0146)
+    cmake_policy(SET CMP0146 OLD)
+endif()
+if(POLICY CMP0167)
+    cmake_policy(SET CMP0167 OLD)
+endif()
+
 project(LocusFX
     VERSION 0.1.0
     DESCRIPTION "High-performance web graphing library with implicit shader rendering"
@@ -30,16 +41,23 @@ endif()
 
 include(FetchContent)
 
+# Disable testing/docs for all dependencies
+set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
+set(EIGEN_BUILD_DOC OFF CACHE BOOL "" FORCE)
+set(EIGEN_BUILD_TESTING OFF CACHE BOOL "" FORCE)
+set(BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(BUILD_BENCHMARKS OFF CACHE BOOL "" FORCE)
+set(WITH_SYMENGINE_THREAD_SAFE ON CACHE BOOL "" FORCE)
+
 # Eigen - Matrix math and regression (Least Squares)
 FetchContent_Declare(
     eigen
     GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
     GIT_TAG 3.4.0
     GIT_SHALLOW TRUE
+    SYSTEM
+    EXCLUDE_FROM_ALL
 )
-set(EIGEN_BUILD_DOC OFF CACHE BOOL "" FORCE)
-set(EIGEN_BUILD_TESTING OFF CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(eigen)
 
 # SymEngine - Computer Algebra System (symbolic derivatives, expression parsing)
 FetchContent_Declare(
@@ -47,22 +65,24 @@ FetchContent_Declare(
     GIT_REPOSITORY https://github.com/symengine/symengine.git
     GIT_TAG v0.12.0
     GIT_SHALLOW TRUE
+    SYSTEM
+    EXCLUDE_FROM_ALL
 )
-set(BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(BUILD_BENCHMARKS OFF CACHE BOOL "" FORCE)
-set(WITH_SYMENGINE_THREAD_SAFE ON CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(symengine)
+
+FetchContent_MakeAvailable(eigen symengine)
 
 # =============================================================================
 # Source files
 # =============================================================================
 
 set(LOCUSFX_SOURCES
-    src/main.cpp
+    src/locusfx.cpp
+    src/codegen.cpp
 )
 
 set(LOCUSFX_HEADERS
-    src/main.h
+    src/locusfx.h
+    src/codegen.h
 )
 
 # =============================================================================
@@ -126,6 +146,10 @@ target_include_directories(locus-fx
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
+    PRIVATE
+        ${symengine_SOURCE_DIR}
+        ${symengine_BINARY_DIR}
+        ${symengine_BINARY_DIR}/symengine/utilities/teuchos
 )
 
 # Compile definitions
