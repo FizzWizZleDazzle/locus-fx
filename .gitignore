@@ -37,5 +37,32 @@
 *.out
 *.app
 
-# debug information files
+# Debug information files
 *.dwo
+
+# CMake
+build/
+build-*/
+cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+*.cmake
+!cmake/*.cmake
+!cmake/*.cmake.in
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Emscripten output
+*.wasm
+*.js.map
+
+# OS files
+.DS_Store
+Thumbs.db
